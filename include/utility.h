@@ -16,19 +16,17 @@ Contact: liangxuav@gmail.com
 
 
 #include <opencv2/opencv.hpp>
+#include <Eigen/Core>
 
-/*
+
+
 // PCL lib
 #include <pcl/io/pcd_io.h>
 #include <pcl/point_types.h>
-#include <pcl/common/transforms.h>
-#include <pcl/visualization/cloud_viewer.h>
-#include <pcl/filters/voxel_grid.h>
 
-// simplilfy the definition
-typedef pcl::PointXYZRGBA PointT;
-typedef pcl::PointCloud<PointT> PointCloud;
-*/
+
+typedef pcl::PointXYZI PointT; 
+typedef pcl::PointCloud<PointT> pointCloud; 
 
 // FRAME Struct
 struct FRAME
@@ -38,6 +36,13 @@ struct FRAME
     cv::Mat depth_x, depth_y, depth_z; 
     cv::Mat desp;       // descriptor
     std::vector<cv::KeyPoint> kp; // key points
+};
+
+struct ResultOfSVD
+{
+    cv::Mat rvec, tvec;
+    Eigen::Matrix3d R_; 
+    Eigen::Vector3d t_; 
 };
 
 // camera interistic parameters
@@ -96,5 +101,8 @@ public:
 };
 
 FRAME readImage(std::string fileName, ParameterReader *pd, int ID = 0); 
+
+pointCloud::Ptr image2PointCloud( FRAME f , int height, int width);
+
 
 #endif

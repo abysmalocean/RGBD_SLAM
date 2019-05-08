@@ -30,12 +30,6 @@ TARGET_LINK_LIBRARIES( main
     ${OpenCV_LIBS} 
     ${PCL_LIBRARIES} )
 
-ADD_EXECUTABLE( vo vo.cpp )
-TARGET_LINK_LIBRARIES( 
-    vo 
-    utility
-    ${OpenCV_LIBS} 
-    ${PCL_LIBRARIES} )
 
 ADD_EXECUTABLE( incParameter incParameter.cpp )
 TARGET_LINK_LIBRARIES( incParameter
@@ -52,6 +46,12 @@ TARGET_LINK_LIBRARIES( pointClould
 
 ADD_EXECUTABLE( scanData scanData.cpp )
 TARGET_LINK_LIBRARIES( scanData
+    utility
+    ${OpenCV_LIBS} 
+    ${PCL_LIBRARIES} )
+
+ADD_EXECUTABLE( jointPCL joinPointCloud.cpp )
+TARGET_LINK_LIBRARIES( jointPCL
     utility
     ${OpenCV_LIBS} 
     ${PCL_LIBRARIES} )

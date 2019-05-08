@@ -4,12 +4,10 @@
 #include <opencv2/opencv.hpp>
 #include <../include/utility.h>
 
-#include <pcl/io/pcd_io.h>
-#include <pcl/point_types.h>
+
 
 //typedef pcl::PointXYZRGBA PointT;
-typedef pcl::PointXYZI PointT; 
-typedef pcl::PointCloud<PointT> pointClould; 
+
 
 
 int main( int argc, char** argv )
@@ -30,7 +28,7 @@ int main( int argc, char** argv )
 
     FRAME f1 = readImage(filePath1, &pd);
 
-    pointClould::Ptr cloud(new pointClould); 
+    pointCloud::Ptr cloud(new pointCloud); 
     // interative the point clould
     for (int i = 0; i < height; ++i)
     {

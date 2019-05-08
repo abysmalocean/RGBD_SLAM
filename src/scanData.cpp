@@ -43,7 +43,7 @@ int main( int argc, char** argv )
 			if (!f->d_name || f->d_name[0] == '.')
                 continue; // Skip everything that starts with a dot
 			std::string filePath = imgsFolder + "/" + f->d_name; 
-			printf("File: %s | num [%zu]\n", f->d_name, count++);
+			//printf("File: %s | num [%zu]\n", f->d_name, count++);
 			paths.push_back(filePath); 
 			
 		}

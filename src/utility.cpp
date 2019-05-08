@@ -1,8 +1,8 @@
-
 #include <../include/utility.h>
 #include <string>
 #include <iostream>
 #include <omp.h>
+
 
 
 /*
@@ -182,3 +182,30 @@ FRAME readImage(std::string FileName, ParameterReader *pd, int ID)
     return f; 
 }
 
+
+pointCloud::Ptr image2PointCloud( FRAME f , int height, int width)
+{
+
+    pointCloud::Ptr cloud(new pointCloud); 
+    // interative the point clould
+    for (int i = 0; i < height; ++i)
+    {
+        for (int j = 0; j < width; ++j)
+        {
+            PointT p; 
+            p.z = f.depth_z.at<double>(i,j); 
+            p.x = f.depth_x.at<double>(i,j); 
+            p.y = f.depth_y.at<double>(i,j);
+
+            p.intensity = f.rgb.at<double>(i,j); 
+            cloud->points.push_back(p); 
+        }
+    }
+
+    cloud->height = 1; 
+    cloud->width = cloud->points.size(); 
+    cloud->is_dense = false; 
+
+    
+
+}
