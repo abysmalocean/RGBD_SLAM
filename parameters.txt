@@ -1,0 +1,23 @@
+display=1
+imageDisplay=1
+writeImg=0
+width=176 
+height=144
+DataFolder=data
+
+testImage=data/d1_0001.dat
+
+nfeatures=2000
+nOctaveLayers=10
+# divide 100 in the program
+contrastThreshold=40
+# mutiply 1.0 in the program
+edgeThreshold=10
+# divide 10
+sigma=16
+scaleFactor=105
+scaleOfGoodMatch=10
+folder1=RV_Data/Pitch/d1_-40/
+folder2=RV_Data/Pitch/d2_-37/
+
+
