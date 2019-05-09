@@ -20,8 +20,8 @@
 #include <g2o/core/factory.h>
 #include <g2o/core/optimization_algorithm_factory.h>
 #include <g2o/core/optimization_algorithm_gauss_newton.h>
-//#include <g2o/solvers/csparse/linear_solver_csparse.h>
-#include "g2o/solvers/cholmod/linear_solver_cholmod.h"
+#include <g2o/solvers/csparse/linear_solver_csparse.h>
+//#include "g2o/solvers/cholmod/linear_solver_cholmod.h"
 #include <g2o/core/robust_kernel.h>
 #include <g2o/core/robust_kernel_factory.h>
 #include <g2o/core/optimization_algorithm_levenberg.h>
