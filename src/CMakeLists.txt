@@ -63,17 +63,19 @@ TARGET_LINK_LIBRARIES( 3DWorld
     ${PCL_LIBRARIES} )
 
 
-LIST( APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake_modules )
-SET( G2O_ROOT /usr/local/include/g2o )
-FIND_PACKAGE( G2O REQUIRED)
-# CSparse
-FIND_PACKAGE( CSparse REQUIRED)
-INCLUDE_DIRECTORIES( ${G2O_INCLUDE_DIR} ${CSPARSE_INCLUDE_DIR} )
-FIND_PACKAGE(SuiteSparse)
-include_directories(${SUITESPARSE_INCLUDE_DIRS})
+SET(G2O_DIR "/usr/local/include/g2o")
+SET(G2O_LIB "/usr/local/include/g2o")
+include_directories( ${G2O_DIR} )
+link_directories( ${G2O_LIB} )
+
+FIND_PACKAGE( G2O )
+
+SET(CSparse_include_DIR "/home/liangxu/tmp/suitesparse-master/CSparse/Include")
+SET(CSparse_include_LIB "/home/liangxu/tmp/suitesparse-master/CSparse/lib/")
+include_directories( ${CSparse_include_DIR} )
+link_directories( ${CSparse_include_LIB} )
 
 
-Find_Package(Cholmod REQUIRED)
 
 ADD_EXECUTABLE( rgbdSlam rgbdSlam.cpp )
 TARGET_LINK_LIBRARIES( rgbdSlam
