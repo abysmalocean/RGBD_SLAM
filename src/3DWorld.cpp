@@ -183,7 +183,7 @@ int main( int argc, char** argv )
     voxel.setLeafSize( gridsize, gridsize, gridsize );
 
 
-    for (int i = 1; i < source.size(); ++i)
+    for (int i = 1; i < 50; i += 2)
     {
         printf("Working on %d reference %d\n",i, reference); 
         FRAME f2 = source[i];
@@ -225,7 +225,7 @@ int main( int argc, char** argv )
             dst.push_back(point2);
         }
 
-        int half = src.size() * 0.4;
+        int half = src.size() * 0.6;
         double threshold = 5.0; 
         cv::Mat rvec, translationVec, inliers, ratationVector;
         cv::Mat affine = cv::Mat::zeros(3,4,CV_64F);
@@ -233,7 +233,7 @@ int main( int argc, char** argv )
         count = 0; 
         while (count < half)
         {
-            threshold += 1.1;
+            threshold += 0.4;
             cv::estimateAffine3D(src, dst, affine,inliers, threshold ,0.98);
             count = 0; 
             for (int i = 0; i < src.size(); ++i)
@@ -288,6 +288,7 @@ int main( int argc, char** argv )
         //viewer.showCloud( cloud );
         
         reference = i; 
+        
     }
     pcl::io::savePCDFile("world.pcd", *cloud);
 

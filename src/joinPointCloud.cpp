@@ -13,6 +13,8 @@ Contact: liangxuav@gmail.com
 #include <dirent.h>
 #include <string>
 
+#include <opencv2/xfeatures2d/nonfree.hpp>
+
 #include <Eigen/Core>
 #include <Eigen/Geometry>
 #include <Eigen/SVD>
@@ -152,7 +154,7 @@ int main( int argc, char** argv )
     double sigma         = atoi(pd.getData( "sigma" ).c_str())/10.0; 
 
     float scaleFactor = atoi(pd.getData( "scaleFactor" ).c_str())/100.0; 
-    
+
     if (display)
     {
         cout << "Image height " << height << " width is " << width << endl; 
@@ -160,7 +162,8 @@ int main( int argc, char** argv )
         cout << "scaleFactor: " << scaleFactor << endl; 
         cout << "nOctaveLayers: " << nOctaveLayers << endl; 
     }
-
+    //cv::Ptr<cv::Feature2D> detector = 
+    //        cv::xfeatures2d::SIFT::create(nfeatures,nOctaveLayers, contrastThreshold,sigma);
     auto detector = cv::ORB::create(nfeatures, scaleFactor, nOctaveLayers, 31);
     
     detector->detectAndCompute(f1.rgb, cv::Mat(), f1.kp, f1.desp);
