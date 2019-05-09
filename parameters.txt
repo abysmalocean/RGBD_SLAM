@@ -1,9 +1,9 @@
-display=1
+display=0
 imageDisplay=1
 writeImg=1
 width=176 
 height=144
-DataFolder=data
+DataFolder=data_tmp
 
 testImage=data/d1_0001.dat
 frame1=1
