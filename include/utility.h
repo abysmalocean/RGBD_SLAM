@@ -106,6 +106,16 @@ pointCloud::Ptr image2PointCloud( FRAME f , int height, int width);
 
 std::vector<cv::DMatch> 
 findGoodMatch(cv::Ptr<cv::DescriptorMatcher> matcher, FRAME& f1, FRAME& f2 );
-
+ResultOfSVD poseEstimation3D3D
+(const std::vector<cv::Point3d>& pts1, 
+ const std::vector<cv::Point3d>& pts2,
+ std::vector<double>& R, 
+ std::vector<double>& t);
+ 
+ ResultOfSVD poseEstimation3D3DReturn
+(const std::vector<cv::Point3d>& pts1, 
+ const std::vector<cv::Point3d>& pts2,
+ std::vector<double>& R, 
+ std::vector<double>& t); 
 
 #endif

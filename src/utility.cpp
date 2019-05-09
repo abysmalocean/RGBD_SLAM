@@ -209,31 +209,179 @@ pointCloud::Ptr image2PointCloud( FRAME f , int height, int width)
     
 }
 
-std::vector<cv::DMatch> 
-findGoodMatch(cv::Ptr<cv::DescriptorMatcher> matcher, FRAME& f1, FRAME& f2 )
-{
-    std::vector<cv::DMatch> matches; 
-    // flann mather
-    
-    
-    matcher->match(f1.desp, f2.desp, matches); 
 
-    std::vector<cv::DMatch> goodMatches; 
-    double minDis = 999;
-    // get the smallest dist 
-    for (size_t i = 0; i < matches.size(); ++i)
-    {
-        if ( matches[i].distance < minDis )
-            minDis = matches[i].distance;
+std::vector<cv::DMatch> 
+findGoodMatch(cv::Ptr<cv::FlannBasedMatcher> matcher, FRAME& f1, FRAME& f2 )
+{
+    std::vector<cv::DMatch> matches;
+    matcher->match( f1.desp, f2.desp , matches );
+
+     //-- Quick calculation of max and min distances between keypoints
+    double max_dist = 0; double min_dist = 100;
+    for( int i = 0; i < f1.desp.rows; i++ )
+    { double dist = matches[i].distance;
+      if( dist < min_dist ) min_dist = dist;
+      if( dist > max_dist ) max_dist = dist;
     }
-    minDis += 0.000001; 
-    //cout<<"min dis = "<<minDis<<endl;
-    // get the good matches
-    int scaleOfGoodMatch = 20.0;
-    for ( size_t i=0; i<matches.size(); i++ )
+
+    std::vector< cv::DMatch > goodMatches;
+
+      for( int i = 0; i < f1.desp.rows; i++ )
+      { if( matches[i].distance <= std::max(15*min_dist, 0.02) )
+        { goodMatches.push_back( matches[i]); }
+      }
+      return goodMatches; 
+}
+
+
+ResultOfSVD poseEstimation3D3D
+(const std::vector<cv::Point3d>& pts1, 
+ const std::vector<cv::Point3d>& pts2,
+ std::vector<double>& R, 
+ std::vector<double>& t)
+{
+    cv::Point3d p1, p2; 
+    int N = pts1.size(); 
+    for (int i = 0; i < N; ++i)
     {
-        if (matches[i].distance <= scaleOfGoodMatch*minDis)
-            goodMatches.push_back( matches[i] );
+        p1 += pts1[i]; 
+        p2 += pts2[i]; 
     }
-    return goodMatches; 
+    p1 = cv::Point3d(cv::Vec3d(p1) / N); 
+    p2 = cv::Point3d(cv::Vec3d(p2) / N); 
+    std::vector<cv::Point3i>     q1 ( N ), q2 ( N ); // remove the center
+    for ( int i=0; i<N; i++ )
+    {
+        q1[i] = pts1[i] - p1;
+        q2[i] = pts2[i] - p2;
+    }
+    // compute q1 * q2 ^ t
+    Eigen::Matrix3d W = Eigen::Matrix3d::Zero();
+    for (int i = 0; i < N; i++)
+    {
+        W += Eigen::Vector3d(q1[i].x, q1[i].y, q1[i].z) * 
+             Eigen::Vector3d(q2[i].x, q2[i].y, q2[i].z).transpose(); 
+    }
+    // SVD on W 
+    Eigen::JacobiSVD<Eigen::Matrix3d> svd(W, Eigen::ComputeFullU|Eigen::ComputeFullV); 
+    Eigen::Matrix3d U = svd.matrixU(); 
+    Eigen::Matrix3d V = svd.matrixV(); 
+
+    if (U.determinant() * V.determinant() < 0)
+	{
+        for (int x = 0; x < 3; ++x)
+        {
+            U(x, 2) *= -1;
+        }
+	}
+    Eigen::Matrix3d R_ = U * (V.transpose()); 
+
+    Eigen::Vector3d t_ = Eigen::Vector3d ( p1.x, p1.y, p1.z ) - 
+                         R_ * Eigen::Vector3d ( p2.x, p2.y, p2.z );
+
+    
+
+    cv::Mat mat_r = (cv::Mat_<double>(3, 3) << R_(0, 0), R_(0, 1), R_(0, 2),
+             R_(1, 0), R_(1, 1), R_(1, 2),
+             R_(2, 0), R_(2, 1), R_(2, 2));
+    cv::Mat rotationVector;
+
+    cv::Rodrigues(mat_r,rotationVector);
+    //cout<<"\n Rotation Vector [Ransac SVD]:\n " << rotationVector * (180.0 / 3.14) << endl; 
+    //cout <<"\n Translation vector [Ransac SVD]: \n" << t_ << endl; 
+
+
+    // convert to cv::Mat
+    auto rot = Eigen::AngleAxisd(R_).axis();
+    R[0] = rot[0]; 
+    R[1] = rot[1]; 
+    R[2] = rot[2]; 
+    t[0] = t_(0,0); 
+    t[1] = t_(1,0); 
+    t[2] = t_(2,0); 
+    ResultOfSVD result; 
+    result.rvec = mat_r; 
+    result.tvec = (cv::Mat_<double>(3,1) << t_(0,0), t_(1,0), t_(2,0)); 
+    result.R_   = R_; 
+    result.t_   = t_; 
+    //cout << result.rvec << endl; 
+    //cout << result.tvec << endl; 
+    return result; 
+
+}
+
+ResultOfSVD poseEstimation3D3DReturn
+(const std::vector<cv::Point3d>& pts1, 
+ const std::vector<cv::Point3d>& pts2,
+ std::vector<double>& R, 
+ std::vector<double>& t)
+{
+    cv::Point3d p1, p2; 
+    int N = pts1.size(); 
+    for (int i = 0; i < N; ++i)
+    {
+        p1 += pts1[i]; 
+        p2 += pts2[i]; 
+    }
+    p1 = cv::Point3d(cv::Vec3d(p1) / N); 
+    p2 = cv::Point3d(cv::Vec3d(p2) / N); 
+    std::vector<cv::Point3i>     q1 ( N ), q2 ( N ); // remove the center
+    for ( int i=0; i<N; i++ )
+    {
+        q1[i] = pts1[i] - p1;
+        q2[i] = pts2[i] - p2;
+    }
+    // compute q1 * q2 ^ t
+    Eigen::Matrix3d W = Eigen::Matrix3d::Zero();
+    for (int i = 0; i < N; i++)
+    {
+        W += Eigen::Vector3d(q1[i].x, q1[i].y, q1[i].z) * 
+             Eigen::Vector3d(q2[i].x, q2[i].y, q2[i].z).transpose(); 
+    }
+    // SVD on W 
+    Eigen::JacobiSVD<Eigen::Matrix3d> svd(W, Eigen::ComputeFullU|Eigen::ComputeFullV); 
+    Eigen::Matrix3d U = svd.matrixU(); 
+    Eigen::Matrix3d V = svd.matrixV(); 
+
+    if (U.determinant() * V.determinant() < 0)
+	{
+        for (int x = 0; x < 3; ++x)
+        {
+            U(x, 2) *= -1;
+        }
+	}
+    Eigen::Matrix3d R_ = U * (V.transpose()); 
+
+    Eigen::Vector3d t_ = Eigen::Vector3d ( p1.x, p1.y, p1.z ) - 
+                         R_ * Eigen::Vector3d ( p2.x, p2.y, p2.z );
+
+    
+
+    cv::Mat mat_r = (cv::Mat_<double>(3, 3) << R_(0, 0), R_(0, 1), R_(0, 2),
+             R_(1, 0), R_(1, 1), R_(1, 2),
+             R_(2, 0), R_(2, 1), R_(2, 2));
+    cv::Mat rotationVector;
+
+    cv::Rodrigues(mat_r,rotationVector);
+    //std::cout<<"\n Rotation Vector [Ransac SVD]:\n " << rotationVector * (180.0 / 3.14) << std::endl; 
+    //std::cout <<"\n Translation vector [Ransac SVD]: \n" << t_ << std::endl; 
+
+
+    // convert to cv::Mat
+    auto rot = Eigen::AngleAxisd(R_).axis();
+    R[0] = rot[0]; 
+    R[1] = rot[1]; 
+    R[2] = rot[2]; 
+    t[0] = t_(0,0); 
+    t[1] = t_(1,0); 
+    t[2] = t_(2,0); 
+    ResultOfSVD result; 
+    result.rvec = mat_r; 
+    result.tvec = (cv::Mat_<double>(3,1) << t_(0,0), t_(1,0), t_(2,0)); 
+    result.R_   = R_; 
+    result.t_   = t_; 
+    //cout << result.rvec << endl; 
+    //cout << result.tvec << endl; 
+    return result; 
+
 }
