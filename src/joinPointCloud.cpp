@@ -149,7 +149,7 @@ int main( int argc, char** argv )
 
     int nfeatures = atoi( pd.getData( "nfeatures" ).c_str() );
     int nOctaveLayers =  atoi( pd.getData( "nOctaveLayers" ).c_str() );
-    double contrastThreshold = atoi(pd.getData( "contrastThreshold" ).c_str())/100.0; 
+    double contrastThreshold = atoi(pd.getData( "contrastThreshold" ).c_str())/1000.0; 
     double edgeThreshold  = atoi(pd.getData( "edgeThreshold" ).c_str()) * 1.0; 
     double sigma         = atoi(pd.getData( "sigma" ).c_str())/10.0; 
 
@@ -162,42 +162,49 @@ int main( int argc, char** argv )
         cout << "scaleFactor: " << scaleFactor << endl; 
         cout << "nOctaveLayers: " << nOctaveLayers << endl; 
     }
-    //cv::Ptr<cv::Feature2D> detector = 
-    //        cv::xfeatures2d::SIFT::create(nfeatures,nOctaveLayers, contrastThreshold,sigma);
-    auto detector = cv::ORB::create(nfeatures, scaleFactor, nOctaveLayers, 31);
+    cv::Ptr<cv::Feature2D> detector = 
+            cv::xfeatures2d::SIFT::create(0,nOctaveLayers, contrastThreshold);
+            //cv::xfeatures2d::SIFT::create(0,5,.002);
+    //auto detector = cv::ORB::create(nfeatures, scaleFactor, nOctaveLayers, 31);
     
     detector->detectAndCompute(f1.rgb, cv::Mat(), f1.kp, f1.desp);
-
     detector->detectAndCompute(f2.rgb, cv::Mat(), f2.kp, f2.desp); 
+    //cout << "Detect the keypoint " << endl; 
+    
     // find matches
-    std::vector<cv::DMatch> matches; 
-    // flann mather
-    cv::Ptr<cv::DescriptorMatcher> matcher = 
-        cv::makePtr<cv::FlannBasedMatcher>(cv::makePtr<cv::flann::LshIndexParams>(12,20, 2));
-    cout << "size of f1" << f1.desp.size() << " f2 " << f2.desp.size() << endl;
-    matcher->match(f1.desp, f2.desp, matches); 
+    std::vector<cv::DMatch> matches;
 
-    std::vector<cv::DMatch> goodMatches; 
-    double minDis = 999;
-    // get the smallest dist 
-    for (size_t i = 0; i < matches.size(); ++i)
-    {
-        if ( matches[i].distance < minDis )
-            minDis = matches[i].distance;
+    // flann mather
+    cv::FlannBasedMatcher matcher;
+    //std::vector< cv::DMatch > matches;
+    matcher.match( f1.desp, f2.desp , matches );
+
+     //-- Quick calculation of max and min distances between keypoints
+    double max_dist = 0; double min_dist = 100;
+    for( int i = 0; i < f1.desp.rows; i++ )
+    { double dist = matches[i].distance;
+      if( dist < min_dist ) min_dist = dist;
+      if( dist > max_dist ) max_dist = dist;
     }
-    minDis += 0.000001; 
-    //cout<<"min dis = "<<minDis<<endl;
-    // get the good matches
-    int scaleOfGoodMatch = atoi( pd.getData( "scaleOfGoodMatch" ).c_str() );
-    for ( size_t i=0; i<matches.size(); i++ )
-    {
-        if (matches[i].distance <= scaleOfGoodMatch*minDis)
-            goodMatches.push_back( matches[i] );
-    }
+
+    printf("-- Max dist : %f \n", max_dist );
+    printf("-- Min dist : %f \n", min_dist );
+
+    //-- Draw only "good" matches (i.e. whose distance is less than 2*min_dist,
+    //-- or a small arbitary value ( 0.02 ) in the event that min_dist is very
+    //-- small)
+    //-- PS.- radiusMatch can also be used here.
+    std::vector< cv::DMatch > goodMatches;
+
+      for( int i = 0; i < f1.desp.rows; i++ )
+      { if( matches[i].distance <= std::max(10*min_dist, 0.02) )
+        { goodMatches.push_back( matches[i]); }
+      }
+    
+
     // display good matches
     if (display)
     {
-        cout<<"Find total "<<matches.size()<<" matches."<<endl;
         cout<<"good matches="<<goodMatches.size()<<endl;
     }
 
@@ -209,6 +216,7 @@ int main( int argc, char** argv )
         cv::imshow( "good matches", imgMatches );
         cv::waitKey(0); 
     }
+    
 
     // 3D poitns
     std::vector<cv::Point3d> src ; 
@@ -218,16 +226,12 @@ int main( int argc, char** argv )
 
     for (size_t i = 0; i<goodMatches.size(); ++i)
     {
-
-        
         cv::Point2d p1 = f1.kp[goodMatches[i].queryIdx].pt;
         cv::Point2d p2 = f2.kp[goodMatches[i].trainIdx].pt;
         
         cv::Point3d point1; 
         cv::Point3d point2;
-        //cout << p1.x << " " << p2.x << endl; 
-        //cout << p1.y << " " << p2.y << endl; 
-        //cout << endl;  
+ 
 
         point1.x = f1.depth_x.at<double>(int(p1.y), int(p1.x)); 
         point1.y = f1.depth_y.at<double>(int(p1.y), int(p1.x)); 
@@ -249,13 +253,14 @@ int main( int argc, char** argv )
         cout<<"dst.size "<<dst.size()<<endl;
     }
     
-    int half = src.size() * 0.7;
-    double threshold = 10.0; 
+    int half = src.size() * 0.6;
+    double threshold = 100.0; 
     
     count = 0; 
     while (count < half)
     {
-        threshold += 0.1;
+        threshold += 10;
+        //cout << threshold << "  " <<count << endl; 
         cv::estimateAffine3D(src, dst,affine,inliers, threshold ,0.99);
         count = 0; 
         for (int i = 0; i < src.size(); ++i)

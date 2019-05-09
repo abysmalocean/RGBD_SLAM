@@ -1,23 +1,23 @@
-display=0
-imageDisplay=0
+display=1
+imageDisplay=1
 writeImg=1
 width=176 
 height=144
 DataFolder=data
 
 testImage=data/d1_0001.dat
-frame1=497
-frame2=502
+frame1=1
+frame2=2
 
-nfeatures=3000
-nOctaveLayers=20
+nfeatures=30
+nOctaveLayers=10
 # divide 100 in the program
-contrastThreshold=40
+contrastThreshold=2
 # mutiply 1.0 in the program
 edgeThreshold=10
 # divide 10
 sigma=16
-scaleFactor=105
+scaleFactor=2
 scaleOfGoodMatch=10
 folder1=RV_Data/Pitch/d1_-40/
 folder2=RV_Data/Pitch/d2_-37/
