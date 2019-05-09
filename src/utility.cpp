@@ -205,7 +205,35 @@ pointCloud::Ptr image2PointCloud( FRAME f , int height, int width)
     cloud->height = 1; 
     cloud->width = cloud->points.size(); 
     cloud->is_dense = false; 
-
+    return cloud; 
     
+}
 
+std::vector<cv::DMatch> 
+findGoodMatch(cv::Ptr<cv::DescriptorMatcher> matcher, FRAME& f1, FRAME& f2 )
+{
+    std::vector<cv::DMatch> matches; 
+    // flann mather
+    
+    
+    matcher->match(f1.desp, f2.desp, matches); 
+
+    std::vector<cv::DMatch> goodMatches; 
+    double minDis = 999;
+    // get the smallest dist 
+    for (size_t i = 0; i < matches.size(); ++i)
+    {
+        if ( matches[i].distance < minDis )
+            minDis = matches[i].distance;
+    }
+    minDis += 0.000001; 
+    //cout<<"min dis = "<<minDis<<endl;
+    // get the good matches
+    int scaleOfGoodMatch = 20.0;
+    for ( size_t i=0; i<matches.size(); i++ )
+    {
+        if (matches[i].distance <= scaleOfGoodMatch*minDis)
+            goodMatches.push_back( matches[i] );
+    }
+    return goodMatches; 
 }

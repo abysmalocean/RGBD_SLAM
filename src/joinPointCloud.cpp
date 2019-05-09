@@ -115,6 +115,7 @@ int main( int argc, char** argv )
 
 	std::string imgsFolder = folder;
 	int count = 0; 
+
 	std::vector<std::string> paths; 
 	if (auto dir = opendir(imgsFolder.c_str()))
 	{
@@ -151,6 +152,7 @@ int main( int argc, char** argv )
     double sigma         = atoi(pd.getData( "sigma" ).c_str())/10.0; 
 
     float scaleFactor = atoi(pd.getData( "scaleFactor" ).c_str())/100.0; 
+    
     if (display)
     {
         cout << "Image height " << height << " width is " << width << endl; 
@@ -169,6 +171,7 @@ int main( int argc, char** argv )
     // flann mather
     cv::Ptr<cv::DescriptorMatcher> matcher = 
         cv::makePtr<cv::FlannBasedMatcher>(cv::makePtr<cv::flann::LshIndexParams>(12,20, 2));
+    cout << "size of f1" << f1.desp.size() << " f2 " << f2.desp.size() << endl;
     matcher->match(f1.desp, f2.desp, matches); 
 
     std::vector<cv::DMatch> goodMatches; 
@@ -243,14 +246,14 @@ int main( int argc, char** argv )
         cout<<"dst.size "<<dst.size()<<endl;
     }
     
-    int half = src.size() * 0.65;
+    int half = src.size() * 0.7;
     double threshold = 10.0; 
     
     count = 0; 
     while (count < half)
     {
         threshold += 0.1;
-        cv::estimateAffine3D(src, dst,affine,inliers, threshold ,0.98);
+        cv::estimateAffine3D(src, dst,affine,inliers, threshold ,0.99);
         count = 0; 
         for (int i = 0; i < src.size(); ++i)
         {
@@ -295,27 +298,47 @@ int main( int argc, char** argv )
     std::vector<double> Rot(3); 
 
     ResultOfSVD Rt = poseEstimation3D3D(srcSVD, dstSVD, Rot, t);
-    Eigen::Isometry3d T = Eigen::Isometry3d::Identity();
-    Eigen::AngleAxisd angle(Rt.R_);
-    cout << angle << endl; 
-    T = angle; 
+    Eigen::Isometry3d transform_2 = Eigen::Isometry3d::Identity();
+    //Eigen::Affine3f transform_2 = Eigen::Affine3f::Identity();
 
+    Eigen::AngleAxisd angle(Rt.R_);
+    //cout << angle << endl; 
+    //T = angle; 
+    
     Eigen::Translation<double,3> trans(Rt.t_(0,0), Rt.t_(1,0), Rt.t_(2,0));
-    T(0,3) = Rt.t_(0,0); 
-    T(1,3) = Rt.t_(1,0); 
-    T(2,3) = Rt.t_(2,0); 
-    cout << "T " << endl; 
+    transform_2(0,3) = Rt.t_(0,0); 
+    transform_2(1,3) = Rt.t_(1,0); 
+    transform_2(2,3) = Rt.t_(2,0); 
+    transform_2(0,0) = Rt.R_(0,0);
+    transform_2(0,1) = Rt.R_(0,1);
+    transform_2(0,2) = Rt.R_(0,2);
+    transform_2(1,0) = Rt.R_(1,0);
+    transform_2(1,1) = Rt.R_(1,1);
+    transform_2(1,2) = Rt.R_(1,2);
+    transform_2(2,0) = Rt.R_(2,0);
+    transform_2(2,1) = Rt.R_(2,1);
+    transform_2(2,2) = Rt.R_(2,2);
+
+    cout << "Rows " <<transform_2.rows() << " Cols " << transform_2.cols() << endl; 
+    //cout << "T " << endl; 
     //cout << T << endl; 
 
     cout<<"converting image to clouds"<<endl;
+
     pointCloud::Ptr cloud1 = image2PointCloud(f1,height, width);
     pointCloud::Ptr cloud2 = image2PointCloud(f2,height, width);
+    cout << "Saving the sub clould " << endl; 
+    pcl::io::savePCDFile("clould1.pcd", *cloud1);
+    pcl::io::savePCDFile("clould2.pcd", *cloud2);
 
     // combine cloulds
     pointCloud::Ptr output (new pointCloud());
     cout<<"combining clouds"<<endl;
+    cout << transform_2.matrix() << endl; 
+
+    pcl::transformPointCloud( *cloud1, *output, transform_2.matrix());
     
-    pcl::transformPointCloud( *cloud1, *output, T.matrix() );
+    cout << "Combine result " << endl; 
     *output += *cloud2;
 
     pcl::io::savePCDFile("result.pcd", *output);

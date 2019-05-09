@@ -1,4 +1,4 @@
-display=1
+display=0
 imageDisplay=1
 writeImg=1
 width=176 
@@ -6,11 +6,11 @@ height=144
 DataFolder=data
 
 testImage=data/d1_0001.dat
-frame1=1
-frame2=10
+frame1=497
+frame2=500
 
-nfeatures=2000
-nOctaveLayers=10
+nfeatures=3000
+nOctaveLayers=20
 # divide 100 in the program
 contrastThreshold=40
 # mutiply 1.0 in the program

@@ -1,2 +1,5 @@
 .vscode/
 build/
+*.pcd
+data_tmp/
+bin/

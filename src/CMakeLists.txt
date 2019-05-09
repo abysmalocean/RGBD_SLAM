@@ -55,3 +55,9 @@ TARGET_LINK_LIBRARIES( jointPCL
     utility
     ${OpenCV_LIBS} 
     ${PCL_LIBRARIES} )
+
+ADD_EXECUTABLE( 3DWorld 3DWorld.cpp )
+TARGET_LINK_LIBRARIES( 3DWorld
+    utility
+    ${OpenCV_LIBS} 
+    ${PCL_LIBRARIES} )

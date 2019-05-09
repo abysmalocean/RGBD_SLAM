@@ -104,5 +104,8 @@ FRAME readImage(std::string fileName, ParameterReader *pd, int ID = 0);
 
 pointCloud::Ptr image2PointCloud( FRAME f , int height, int width);
 
+std::vector<cv::DMatch> 
+findGoodMatch(cv::Ptr<cv::DescriptorMatcher> matcher, FRAME& f1, FRAME& f2 );
+
 
 #endif
